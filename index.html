@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#C3002F">
+<meta name="robots" content="noindex">
+<title>Encuesta de Posventa · Nissan Kyoto</title>
+<style>
+  :root {
+    --rojo: #C3002F;
+    --gris: #D0D3D4;
+    --gris-borde: #9EA3A6;
+    --negro: #1A1A1A;
+    --texto-suave: #55595C;
+    --fondo: #F4F4F4;
+    --nota-roja: #D32027;
+    --nota-amarilla: #F2B700;
+    --nota-verde: #2E9E4F;
+    --alto-barra: 76px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo);
+    color: var(--negro);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ───── Encabezado: arranca a pantalla completa y se encoge a barra ───── */
+  .barra {
+    position: fixed; inset: 0 0 auto 0;
+    height: 100dvh;
+    background: var(--rojo);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    z-index: 10;
+    transition: height .9s cubic-bezier(.77, 0, .18, 1);
+  }
+  .barra.lista { height: var(--alto-barra); }
+  .barra img {
+    display: block;
+    width: min(70vw, 360px);
+    height: auto;
+    opacity: 0;
+    transform: scale(.82);
+    transition: width .9s cubic-bezier(.77, 0, .18, 1);
+    animation: logo-entra .9s .15s cubic-bezier(.2, .7, .2, 1) forwards;
+  }
+  .barra.lista img { width: 150px; }
+  @keyframes logo-entra { to { opacity: 1; transform: scale(1); } }
+
+  /* ───── Contenido ───── */
+  main {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: calc(var(--alto-barra) + 28px) 20px calc(32px + env(safe-area-inset-bottom));
+    min-height: 100dvh;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .6s .35s ease, transform .6s .35s ease;
+  }
+  .lista ~ main, body.listo main { opacity: 1; transform: none; }
+
+  h1 { font-size: 1.45rem; line-height: 1.25; margin: 0 0 8px; font-weight: 700; text-align: center; }
+  .sub { margin: 0 0 28px; text-align: center; color: var(--texto-suave); font-size: 1rem; line-height: 1.45; }
+
+  /* ───── Estrellas ───── */
+  .estrellas {
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 10px;
+    border: 0; padding: 0; margin: 0 0 8px;
+    min-height: 78px;
+  }
+  .estrellas legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .estrella { position: relative; width: 48px; height: 48px; flex: none; cursor: pointer; }
+  .estrella input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .estrella svg {
+    display: block; width: 100%; height: 100%;
+    transform-origin: 50% 100%;
+    transform: scale(.82);
+    transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), filter .3s;
+    transition-delay: var(--retardo, 0s);
+    pointer-events: none;
+  }
+  .estrella path { fill: var(--gris); stroke: var(--gris-borde); stroke-width: 1.5; stroke-linejoin: round; transition: fill .3s var(--retardo, 0s), stroke .3s var(--retardo, 0s); }
+  .estrella:has(input:focus-visible) { outline: 3px solid var(--negro); outline-offset: 4px; border-radius: 10px; }
+
+  /* Escalera: la 1ª más chica, la 5ª más grande. Solo las estrellas elegidas suben. */
+  .estrella.on svg { transform: scale(var(--escala)); filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .22)); }
+  .estrella.on path { fill: var(--color); stroke: var(--color-borde); }
+  .estrellas[data-nota="1"], .estrellas[data-nota="2"], .estrellas[data-nota="3"] { --color: var(--nota-roja); --color-borde: #A3151B; }
+  .estrellas[data-nota="4"] { --color: var(--nota-amarilla); --color-borde: #B98A00; }
+  .estrellas[data-nota="5"] { --color: var(--nota-verde); --color-borde: #1F7538; }
+  .estrella:nth-of-type(1) { --escala: .86; }
+  .estrella:nth-of-type(2) { --escala: .98; }
+  .estrella:nth-of-type(3) { --escala: 1.10; }
+  .estrella:nth-of-type(4) { --escala: 1.22; }
+  .estrella:nth-of-type(5) { --escala: 1.34; }
+
+  .leyendas { display: flex; justify-content: space-between; margin: 6px 4px 0; font-size: .72rem; color: var(--texto-suave); }
+
+  .resultado {
+    min-height: 3.2em; margin: 24px 0 18px; text-align: center;
+    font-size: 1.25rem; font-weight: 700; color: var(--texto-suave);
+  }
+  .resultado.n1, .resultado.n2, .resultado.n3 { color: var(--nota-roja); }
+  .resultado.n4 { color: #8A6700; }
+  .resultado.n5 { color: var(--nota-verde); }
+
+  .comentario { margin: 0 0 18px; animation: aparece .45s ease both; }
+  .comentario label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 1rem; }
+  .comentario label span { font-weight: 400; color: var(--texto-suave); }
+  .comentario textarea {
+    display: block; width: 100%; min-height: 96px; padding: 12px 14px;
+    border: 2px solid var(--gris); border-radius: 12px; background: #fff;
+    font: inherit; font-size: 1rem; line-height: 1.4; color: var(--negro); resize: vertical;
+  }
+  .comentario textarea:focus { outline: none; border-color: var(--rojo); }
+
+  .boton {
+    display: block; width: 100%; min-height: 54px;
+    border: 0; border-radius: 12px;
+    background: var(--rojo); color: #fff;
+    font: inherit; font-size: 1.05rem; font-weight: 700; letter-spacing: .02em;
+    cursor: pointer;
+    transition: background .2s, opacity .2s, transform .1s;
+  }
+  .boton:hover:not(:disabled) { background: #A30028; }
+  .boton:active:not(:disabled) { transform: scale(.985); }
+  .boton:disabled { background: var(--gris); color: #6A6E70; cursor: not-allowed; }
+  .boton:focus-visible { outline: 3px solid var(--negro); outline-offset: 3px; }
+
+  .error { margin: 14px 0 0; text-align: center; color: #B00020; font-size: .95rem; min-height: 1.3em; }
+  .prueba { background: #FFF4C2; color: #5C4A00; text-align: center; font-size: .8rem; padding: 6px 10px; border-radius: 8px; margin-bottom: 18px; }
+
+  /* ───── Gracias ───── */
+  .gracias { display: none; text-align: center; padding-top: 24px; }
+  .gracias.visible { display: block; animation: aparece .6s ease both; }
+  .gracias .aro {
+    width: 96px; height: 96px; margin: 0 auto 22px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--nota-verde);
+  }
+  .gracias.n1 .aro, .gracias.n2 .aro, .gracias.n3 .aro { background: var(--nota-roja); }
+  .gracias.n4 .aro { background: var(--nota-amarilla); }
+  .gracias svg { width: 52px; height: 52px; }
+  .gracias svg path { stroke: #fff; stroke-width: 5; fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 60; stroke-dashoffset: 60; animation: tilde .6s .3s ease forwards; }
+  .gracias p { color: var(--texto-suave); line-height: 1.5; margin: 0 0 10px; }
+  @keyframes tilde { to { stroke-dashoffset: 0; } }
+  @keyframes aparece { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  .oculto { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
+  }
+  @media (max-width: 360px) { .estrellas { gap: 6px; } .estrella { width: 44px; height: 44px; } }
+</style>
+</head>
+<body>
+
+<header class="barra" id="barra">
+  <img src="logo-blanco.png" alt="Nissan Kyoto" width="640" height="219">
+</header>
+
+<main>
+  <section id="pregunta">
+    <div id="aviso-prueba" class="prueba oculto">Modo prueba: la respuesta no se guarda.</div>
+    <h1>¿Cómo calificarías nuestra atención?</h1>
+    <p class="sub">¿Cuál es tu satisfacción general con Posventa?</p>
+
+    <fieldset class="estrellas" id="estrellas">
+      <legend>Calificación de 1 a 5 estrellas</legend>
+      <label class="estrella" data-n="1"><input type="radio" name="nota" value="1" aria-label="1 estrella, muy mala"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg></label>
+      <label class="estrella" data-n="2"><input type="radio" name="nota" value="2" aria-label="2 estrellas, mala"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg></label>
+      <label class="estrella" data-n="3"><input type="radio" name="nota" value="3" aria-label="3 estrellas, regular"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg></label>
+      <label class="estrella" data-n="4"><input type="radio" name="nota" value="4" aria-label="4 estrellas, buena"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg></label>
+      <label class="estrella" data-n="5"><input type="radio" name="nota" value="5" aria-label="5 estrellas, excelente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg></label>
+    </fieldset>
+    <div class="leyendas" aria-hidden="true"><span>Muy mala</span><span>Excelente</span></div>
+
+    <div class="resultado" id="resultado" aria-live="polite">Tocá una estrella</div>
+
+    <div class="comentario oculto" id="comentario-caja">
+      <label for="comentario">¿Qué podríamos mejorar? <span>(opcional)</span></label>
+      <textarea id="comentario" maxlength="500" rows="3" placeholder="Contanos qué pasó"></textarea>
+    </div>
+
+    <button class="boton" id="enviar" type="button" disabled>Enviar</button>
+    <p class="error" id="error" role="alert"></p>
+  </section>
+
+  <section class="gracias" id="gracias" aria-live="polite">
+    <div class="aro"><svg viewBox="0 0 52 52" aria-hidden="true"><path d="M13 27l9 9 17-20"/></svg></div>
+    <h1 id="gracias-titulo">¡Gracias por tu opinión!</h1>
+    <p id="gracias-texto">Ya registramos tu calificación.</p>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  /* URL de la aplicación web de Apps Script (termina en /exec). Vacía = modo prueba: no guarda nada. */
+  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbxYOHUXR4Lr_KNF77h-d_7rpW77JfOvArcbfjg8NnPgi--thfNfxX7Avd_CfKafJNVAkQ/exec';
+
+  var SUCURSALES = {
+    CTES: 'Corrientes', CORRIENTES: 'Corrientes',
+    RCIA: 'Resistencia', RESISTENCIA: 'Resistencia',
+    PDAS: 'Posadas', POSADAS: 'Posadas'
+  };
+  var LEYENDAS = { 1: 'Muy mala', 2: 'Mala', 3: 'Regular', 4: 'Buena', 5: 'Excelente' };
+  var GRACIAS = {
+    5: ['¡Gracias por tu opinión!', 'Nos alegra que hayas quedado conforme. Te esperamos en tu próximo service.'],
+    4: ['¡Gracias por tu opinión!', 'Vamos a seguir trabajando para llegar al 5.'],
+    3: ['Gracias por contarnos', 'Lamentamos que la atención no haya sido la esperada. Tu opinión nos ayuda a mejorar.'],
+    2: ['Gracias por contarnos', 'Lamentamos que la atención no haya sido la esperada. Tu opinión nos ayuda a mejorar.'],
+    1: ['Gracias por contarnos', 'Lamentamos que la atención no haya sido la esperada. Tu opinión nos ayuda a mejorar.']
+  };
+
+  var barra = document.getElementById('barra');
+  var estrellas = document.getElementById('estrellas');
+  var resultado = document.getElementById('resultado');
+  var enviar = document.getElementById('enviar');
+  var error = document.getElementById('error');
+  var labels = estrellas.querySelectorAll('.estrella');
+  var nota = 0;
+  var enviando = false;
+  var id = nuevoId();
+
+  /* Sucursal desde el link del NFC: ?s=CTES | RCIA | PDAS (o el nombre completo). */
+  var sucursal = (function () {
+    try {
+      var s = new URLSearchParams(location.search).get('s') || '';
+      return SUCURSALES[s.trim().toUpperCase()] || '';
+    } catch (e) { return ''; }
+  })();
+
+  if (!ENDPOINT) document.getElementById('aviso-prueba').classList.remove('oculto');
+
+  /* ───── Animación de entrada ───── */
+  var reducido = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(function () {
+    barra.classList.add('lista');
+    document.body.classList.add('listo');
+  }, reducido ? 0 : 2100);
+
+  /* ───── Estrellas ───── */
+  estrellas.addEventListener('change', function (ev) {
+    if (ev.target && ev.target.name === 'nota') elegir(Number(ev.target.value));
+  });
+
+  function elegir(n) {
+    nota = n;
+    estrellas.setAttribute('data-nota', String(n));
+    for (var i = 0; i < labels.length; i++) {
+      var activa = i < n;
+      labels[i].classList.toggle('on', activa);
+      // las estrellas suben una tras otra, de la 1ª a la última
+      labels[i].style.setProperty('--retardo', activa ? (i * 0.08) + 's' : '0s');
+    }
+    resultado.textContent = n + (n === 1 ? ' estrella' : ' estrellas') + ' · ' + LEYENDAS[n];
+    resultado.className = 'resultado n' + n;
+    enviar.disabled = false;
+    error.textContent = '';
+    // con 1 a 4 estrellas se ofrece un comentario; con 5 no
+    document.getElementById('comentario-caja').classList.toggle('oculto', n === 5);
+  }
+
+  /* ───── Envío ───── */
+  enviar.addEventListener('click', function () {
+    if (!nota || enviando) return;
+    enviando = true;
+    enviar.disabled = true;
+    enviar.textContent = 'Enviando…';
+    error.textContent = '';
+
+    var comentario = nota < 5 ? document.getElementById('comentario').value.trim() : '';
+    mandar({ id: id, nota: nota, sucursal: sucursal, comentario: comentario }).then(function () {
+      mostrarGracias();
+    }).catch(function () {
+      enviando = false;
+      enviar.disabled = false;
+      enviar.textContent = 'Reintentar';
+      error.textContent = 'No pudimos enviar tu respuesta. Revisá tu conexión y probá de nuevo.';
+    });
+  });
+
+  function mandar(datos) {
+    if (!ENDPOINT) return new Promise(function (ok) { setTimeout(ok, 500); });   // modo prueba
+    // Sin headers: pedido simple (no hace falta preflight CORS con Apps Script).
+    return fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(datos) })
+      .then(function (r) { return r.json(); })
+      .then(function (r) { if (!r || !r.ok) throw new Error((r && r.error) || 'error'); });
+  }
+
+  function mostrarGracias() {
+    var g = document.getElementById('gracias');
+    document.getElementById('pregunta').classList.add('oculto');
+    document.getElementById('gracias-titulo').textContent = GRACIAS[nota][0];
+    document.getElementById('gracias-texto').textContent = GRACIAS[nota][1];
+    g.className = 'gracias visible n' + nota;
+    window.scrollTo(0, 0);
+  }
+
+  function nuevoId() {
+    try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) { /* sigue */ }
+    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+})();
+</script>
+</body>
+</html>
